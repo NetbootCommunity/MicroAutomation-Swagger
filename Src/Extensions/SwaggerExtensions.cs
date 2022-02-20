@@ -24,19 +24,16 @@ public static class ServiceExtensions
     public static void AddSwagger(this IServiceCollection services, IConfiguration configuration)
     {
         // Get swagger configurations.
-        var docConfigurations = configuration.GetSection("SwaggerConfiguration:Documents").Get<List<DocOption>>();
-        var authConfiguration = new AuthOption();
-        configuration.GetSection("SwaggerConfiguration:Authentication").Bind(authConfiguration);
-        var featureConfiguration = new FeatureOption();
-        configuration.GetSection("SwaggerConfiguration:Features").Bind(featureConfiguration);
+        var swaggerConfiguration = new SwaggerOption();
+        configuration.GetSection(nameof(SwaggerOption)).Bind(swaggerConfiguration);
 
-        if (docConfigurations != null)
+        if (swaggerConfiguration.Documents != null)
         {
             services.AddSwaggerGen(c =>
             {
                 #region Documents
 
-                foreach (var docConfiguration in docConfigurations)
+                foreach (var docConfiguration in swaggerConfiguration.Documents)
                 {
                     c.SwaggerDoc(docConfiguration.Version, new OpenApiInfo
                     {
@@ -56,7 +53,7 @@ public static class ServiceExtensions
 
                 #region Oauth2
 
-                if (featureConfiguration.OauthAuthentication)
+                if (swaggerConfiguration.Features.OauthAuthentication)
                 {
                     c.AddSecurityDefinition("Oauth2", new OpenApiSecurityScheme
                     {
@@ -71,9 +68,9 @@ public static class ServiceExtensions
                         {
                             AuthorizationCode = new OpenApiOAuthFlow
                             {
-                                AuthorizationUrl = authConfiguration.AuthorizationUrl,
-                                TokenUrl = authConfiguration.TokenUrl,
-                                Scopes = authConfiguration.Scopes,
+                                AuthorizationUrl = swaggerConfiguration.Authentication.AuthorizationUrl,
+                                TokenUrl = swaggerConfiguration.Authentication.TokenUrl,
+                                Scopes = swaggerConfiguration.Authentication.Scopes,
                             }
                         }
                     });
@@ -96,7 +93,7 @@ public static class ServiceExtensions
 
                 #region Bearer
 
-                if (featureConfiguration.BearerAuthentication)
+                if (swaggerConfiguration.Features.BearerAuthentication)
                 {
                     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                     {
